@@ -1,0 +1,322 @@
+using System;
+using System.Collections.Generic;
+
+public class EmployeeNameComparer : IComparer<Employee>
+{
+    public int Compare(Employee x, Employee y)
+    {
+        if (x == null || y == null) return 0;
+        return string.Compare(x.Name, y.Name);
+    }
+}
+
+public class EmployeeSalaryComparer : IComparer<Employee>
+{
+    public int Compare(Employee x, Employee y)
+    {
+        if (x == null || y == null) return 0;
+        return x.Salary.CompareTo(y.Salary);
+    }
+}
+
+public class EmployeeAgeComparer : IComparer<Employee>
+{
+    public int Compare(Employee x, Employee y)
+    {
+        if (x == null || y == null) return 0;
+        return x.Age.CompareTo(y.Age);
+    }
+}
+
+public class EmployeeIDComparer : IComparer<Employee>
+{
+    public int Compare(Employee x, Employee y)
+    {
+        if (x == null || y == null) return 0;
+        return x.ID.CompareTo(y.ID);
+    }
+}
+
+public static class Exclass
+{
+    public static void Display(this List<Employee> emp)
+    {
+        if (emp == null || emp.Count() == 0)
+        {
+            Console.WriteLine("No employees to display.");
+            return;
+        }
+        foreach (var empl in emp)
+        {
+            if (empl != null)
+            {
+                Console.WriteLine(empl.ToString());
+            }
+        }
+    }
+}
+
+public enum Gender
+{
+    Male,
+    Female,
+}
+
+public class Human
+{
+    public int Age { get; set; }
+    public string Name { get; set; }
+    public Gender Gender { get; set; }
+
+    public Human(int age, string name, Gender gender)
+    {
+        Age = age;
+        Name = name;
+        Gender = gender;
+    }
+
+    public override string ToString()
+    {
+        return $"Name: {Name}, Age: {Age}, Gender: {Gender}";
+    }
+}
+
+public class Employee : Human
+{
+    public int ID { get; }
+    public int Salary { get; set; }
+
+    private static int Objectcnt = 0;
+
+    public Employee(string name, int salary, Gender gender, int age)
+        : base(age, name, gender)
+    {
+        Salary = salary;
+        ID = ++Objectcnt;
+    }
+
+    public override string ToString()
+    {
+        return $"{base.ToString()}, Employee ID: {ID}, Employee Salary: {Salary}";
+    }
+}
+
+internal class Program
+{
+    public static void Main(string[] args)
+    {
+        List<Employee> emp = new List<Employee>();
+        string[] menu = { "New", "Display", "Sort", "Exit" };
+        string[] sortOptions = { "By Name", "By Salary", "By Age", "By ID" };
+        int chs = 0;
+        int data_idx = 0;
+        bool isRunning = true;
+
+        do
+        {
+            Console.Clear();
+            ShowMenu(menu, chs);
+            ConsoleKeyInfo k = Console.ReadKey();
+
+            switch (k.Key)
+            {
+                case ConsoleKey.UpArrow:
+                    chs = (chs == 0) ? menu.Length - 1 : chs - 1;
+                    break;
+                case ConsoleKey.DownArrow:
+                    chs = (chs == menu.Length - 1) ? 0 : chs + 1;
+                    break;
+                case ConsoleKey.Enter:
+                    switch (chs)
+                    {
+                        case 0:
+                            bool addMore;
+                            do
+                            {
+                                emp.Add(SetData());
+                                Console.WriteLine("Do you want to add another Employee? (y/n)");
+                                char response = Console.ReadKey().KeyChar;
+                                addMore = response == 'y' || response == 'Y';
+                                Console.Clear();
+                            } while (addMore);
+                            break;
+                        case 1:
+                            Console.Clear();
+                            emp.Display();
+                            Console.ReadKey();
+                            break;
+                        case 2:
+                            NavigateSortMenu(emp, sortOptions);
+                            break;
+                        case 3:
+                            isRunning = false;
+                            break;
+                    }
+                    break;
+                case ConsoleKey.Escape:
+                    isRunning = false;
+                    break;
+            }
+        } while (isRunning);
+    }
+
+    public static void ShowMenu(string[] options, int selectedIndex)
+    {
+        int disx = Console.WindowWidth / 2;
+        int disy = Console.WindowHeight / 4;
+        for (int i = 0; i < options.Length; i++)
+        {
+            Console.BackgroundColor = (selectedIndex == i) ? ConsoleColor.Green : ConsoleColor.Black;
+            int posX = disx - (options[i].Length / 2);
+            int posY = disy * (i + 1);
+            Console.SetCursorPosition(posX, posY);
+            Console.WriteLine(options[i]);
+        }
+        Console.ResetColor();
+    }
+
+    public static void NavigateSortMenu(List<Employee> emp, string[] sortOptions)
+    {
+        int sortChs = 0;
+        bool sorting = true;
+
+        while (sorting)
+        {
+            Console.Clear();
+            ShowMenu(sortOptions, sortChs);
+            ConsoleKeyInfo sortKey = Console.ReadKey();
+
+            switch (sortKey.Key)
+            {
+                case ConsoleKey.UpArrow:
+                    sortChs = (sortChs == 0) ? sortOptions.Length - 1 : sortChs - 1;
+                    break;
+                case ConsoleKey.DownArrow:
+                    sortChs = (sortChs == sortOptions.Length - 1) ? 0 : sortChs + 1;
+                    break;
+                case ConsoleKey.Enter:
+                    try
+                    {
+                        SortEmployees(emp, sortChs);
+                        Console.Clear();
+                        emp.Display();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"An error occurred while sorting: {ex.Message}");
+                    }
+                    Console.ReadKey();
+                    sorting = false;
+                    break;
+                case ConsoleKey.Escape:
+                    sorting = false;
+                    break;
+            }
+        }
+    }
+
+    public static void SortEmployees(List<Employee> emp, int sortOption)
+    {
+        Console.Clear();
+        Console.WriteLine("Choose sorting order:");
+        Console.WriteLine("1: Ascending");
+        Console.WriteLine("2: Descending");
+        int orderChoice;
+        while (!int.TryParse(Console.ReadLine(), out orderChoice) || (orderChoice != 1 && orderChoice != 2))
+        {
+            Console.WriteLine("Invalid input. Please enter 1 for Ascending or 2 for Descending.");
+        }
+
+        IComparer<Employee> comparer = sortOption switch
+        {
+            0 => new EmployeeNameComparer(),
+            1 => new EmployeeSalaryComparer(),
+            2 => new EmployeeAgeComparer(),
+            3 => new EmployeeIDComparer(),
+        };
+
+        if (emp.Count > 0)
+        {
+            emp.Sort((x, y) =>
+            {
+                int result = comparer.Compare(x, y);
+                return orderChoice == 1 ? result : -result; 
+            });
+        }
+    }
+
+    public static Employee SetData()
+    {
+        
+            
+
+        Console.Clear();
+
+        string name;
+        do
+        {
+            Console.WriteLine("Enter Employee Name (non-empty):");
+            name = Console.ReadLine();
+            if (name == null || name == "")
+            {
+                Console.WriteLine("Name cannot be empty. Please try again.");
+            }
+
+
+        } while (name == null || name == "");
+
+        int salary;
+        do
+        {
+            Console.WriteLine("Enter Employee Salary (positive integer):");
+            if (int.TryParse(Console.ReadLine(), out salary) && salary > 0)
+            {
+                Console.WriteLine("Invalid salary input. Please enter a positive integer.");
+            }
+        } while (salary <= 0);
+
+        Gender employeeGender;
+        int gender;
+        do
+        {
+            Console.WriteLine("Enter Employee Gender:");
+            Console.WriteLine("0: Male");
+            Console.WriteLine("1: Female");
+            if (int.TryParse(Console.ReadLine(), out gender) && Enum.IsDefined(typeof(Gender), gender))
+            {
+                employeeGender = (Gender)gender;
+                break;
+            }
+            else
+            {
+                Console.WriteLine("Invalid gender input. Please enter 0 for Male or 1 for Female.");
+            }
+        } while (true);
+
+        int age;
+        do
+        {
+            Console.WriteLine("Enter Age (positive integer):");
+            bool isValidAge = int.TryParse(Console.ReadLine(), out age);
+            if (!isValidAge || age <= 0 || age < 18)
+            {
+                Console.WriteLine("Invalid age input. Please enter a positive integer.");
+                Console.WriteLine("OR");
+                Console.WriteLine("Too young to be an Employee");
+            }
+            else if (isValidAge && age > 0 && age > 18)
+            {
+                break;
+            }
+                
+
+        } while (true);
+
+            
+
+        return new Employee(name, salary, employeeGender, age);
+        
+    }
+
+    
+}
